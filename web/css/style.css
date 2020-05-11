@@ -1,0 +1,116 @@
+body{
+    background-image:  linear-gradient(to right, rgb(148, 226, 178) 1%, rgb(2, 255, 200) 12%, rgba(21, 210, 235, 0.22) 70%,
+     rgba(16, 227, 255, 0.22) 100%), url('../images/IR10.jpg');
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: 100% 100%;
+        
+}
+h1{
+    position: relative;
+    font-size: 300%;
+}
+
+#div01{
+    font-weight: bolder;
+font-size: 67px;
+margin-left: 10%;
+}
+#div02{
+    font-weight: bolder;
+        font-size: 60px;
+    margin-left: 20%;
+}
+
+
+
+#sp1{
+ color: crimson;   
+}
+#sp2{
+    color: darkblue;
+}
+#sp3{
+    color: coral;
+}
+#sp4{
+    color: blueviolet;
+}
+#sp5{
+    color: chartreuse;
+}
+#sp6{
+    color: darkgray;
+}
+#sp7{
+    color: brown;
+}
+#sp8{
+    color: rgb(255, 238, 0);
+}
+#sp9{
+    color: magenta;
+}
+#sp11{
+    color: navy;
+}
+#sp12{
+    color: seagreen;
+}
+#sp13{
+    color: red;
+}
+
+
+
+#sp21{
+    color: crimson;   
+   }
+   #sp22{
+       color: darkblue;
+   }
+   #sp23{
+       color: coral;
+   }
+   #sp24{
+       color: blueviolet;
+   }
+   #sp25{
+       color: chartreuse;
+   }
+   #sp26{
+       color: darkgray;
+   }
+
+
+#body{
+    margin-top:5%;margin-left: 0%;
+}
+
+#div1{
+    width: fit-content;
+}
+
+#div2{
+    float:left;
+}
+
+
+
+#div3{
+    float: left;margin-right: 15px;
+}
+
+#div4{
+    margin-top: 70px;margin-left: 45%;
+}
+
+#btn1{
+    font-size: large;font-weight: bolder;
+}
+
+
+hr.rounded {
+    border-top: 4px solid rgb(4, 205, 255);
+    border-radius: 5px;
+  }

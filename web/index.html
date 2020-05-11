@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+
+  <title>Vector Space Model</title>
+  <link rel="stylesheet" href="css/bootstrap.css">
+  <link rel="stylesheet" href="css/style.css">
+
+
+</head>
+
+<body>
+  <div class="container" id="div0">
+    <div id="div01"><span id="sp1">In</span><span id="sp2">fo</span><span id="sp3">rm</span><span
+        id="sp4">at</span><span id="sp5">ion</span> <span id="sp6">Re</span><span id="sp7">tr</span><span
+        id="sp8">ie</span><span id="sp9">val</span></div>
+    <div id="div02">
+      <h2><span id="sp11"> Kmeans</span> <span id="sp12"> And </span> <span id="sp13">KNN</span></h2>
+      <h2>
+        <12,2,0,0,1>
+          <0,1,5,5,1>
+      </h2>
+    </div>
+  </div>
+  <div id="body">
+
+    <div class="container">
+      <h1>KNN Portal</h1>
+      <div class="row">
+        <div class="col">
+          <label>
+            <h3>Select A Custom File For KNN</h3>
+          </label>
+          <br />
+          <input accept=".txt" id="input1" style="color:royalblue" type="file" name="inputfile">
+        </div>
+      </div>
+      <br />
+      <div class="row">
+        <div class="col"> <button class="btn btn-warning" id="btn1" onclick="call_python('predict')">Predict Class</button>
+        </div>
+        <div class="col" id="KNNPredcition"></div>
+      </div>
+      <br /><br />
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col">
+
+            <button class="btn btn-outline-primary" id="btn1" onclick="call_python('trainKNN')">Generate Training Vectors</button>
+          </div>
+          <div class="col">
+            <button class="btn btn-outline-primary" id="btn1" onclick="call_python('seeList')">See Test Documents List</button>
+          </div>
+          <div class="col">
+            <button class="btn btn-outline-primary" id="btn1" onclick="call_python('testKNN')">Test KNN with remaining
+              Data</button>
+          </div>
+        </div>
+      </div>
+      <h5 id="Alert" style="color: red;margin-left: 23%;margin-top: 10px;"></h5>
+
+    </div>
+    <br />
+    <br />
+
+    <div class="container " id="answer" style="white-space: pre-wrap">
+    </div>
+    <hr class="rounded">
+<!--  -->
+<!--  -->
+<!--  -->
+    <div class="container">
+      <h1>Kmeans Portal</h1>
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col">
+
+            <button class="btn btn-outline-primary" id="btn1" onclick="call_python('trainKmeans')">Geenrate Kmeans Vectors</button>
+          </div>
+          <div class="col">
+            <button class="btn btn-outline-primary" id="btn1" onclick="call_python('testKmeans')">Run Clustering
+              Data</button>
+          </div>
+        </div>
+      </div>
+      <h5 id="Alert1" style="color: red;margin-left: 23%;margin-top: 10px;"></h5>
+
+    </div>
+    <br />
+    <br />
+
+    <div class="container " id="answer1" style="white-space: pre-wrap">
+    </div>
+  </div>
+  <script type="text/javascript" src="/eel.js"></script>
+  <script type="text/javascript">
+    var text = ""
+    var choice = true
+    var response = ""
+    eel.expose(say_hello_js);               // Expose this function to Python
+    function say_hello_js(x) {
+      console.log("kasjasdjk")
+      document.getElementById("Alert").innerHTML = x;
+    }
+    eel.expose(say_hello_js1);               // Expose this function to Python
+    function say_hello_js1(x) {
+      console.log("kasjasdjk")
+      document.getElementById("Alert1").innerHTML = x;
+    }
+
+    function call_python(param) {
+      if(param==='predict'){
+        if(text===""){
+          document.getElementById('Alert').innerHTML = "Please Select A Document First"
+          return
+        }
+        eel.say_hello_py(text,'predictKNN')(function(result){
+          document.getElementById('KNNPredcition').innerHTML = result
+        })
+      }
+      else if(param==="trainKmeans"){
+        eel.say_hello_py('',param)(function(result){
+          document.getElementById("answer1").innerHTML = result
+        })
+      }
+      else if(param==='testKmeans'){
+        eel.say_hello_py('',param)(function(result){
+          document.getElementById("answer1").innerHTML = result
+        })
+      }
+      else {
+      eel.say_hello_py('',param)(function (result) {
+        document.getElementById("answer").innerHTML = result
+      });  // Call a Python function
+
+    }}
+
+
+    document.getElementById('input1')
+      .addEventListener('change', function () {
+
+        var fr = new FileReader();
+        fr.onload = function () {
+          text = fr.result;
+        }
+
+        fr.readAsText(this.files[0]);
+      }) 
+  </script>
+
+</body>
+
+</html>
