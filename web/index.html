@@ -12,13 +12,32 @@
 </head>
 
 <body>
+
+  <nav class="navbar navbar-expand-md navbar-dark bg-dark navbar-fixed-top">
+    <a href="#" class="navbar-brand"><div id="div01"><span id="sp1">In</span><span id="sp2">fo</span><span id="sp3">rm</span><span
+      id="sp4">at</span><span id="sp5">ion</span> <span id="sp6">Re</span><span id="sp7">tr</span><span
+      id="sp8">ie</span><span id="sp9">val</span></div></a>
+    <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarCollapse">
+        <div class="navbar-nav ml-auto">
+            <a href="#" class="nav-item nav-link active " id="hvr"><h2><span id="sp6"> KNN</span></h2></a>
+            <a href="index1.html" class="nav-item nav-link " id="hvr"><h2><span id="sp6"> Kmeans</span></h2></a>
+        </div>
+       
+    </div>
+</nav>
+
+
+
+
+
   <div class="container" id="div0">
-    <div id="div01"><span id="sp1">In</span><span id="sp2">fo</span><span id="sp3">rm</span><span
-        id="sp4">at</span><span id="sp5">ion</span> <span id="sp6">Re</span><span id="sp7">tr</span><span
-        id="sp8">ie</span><span id="sp9">val</span></div>
+   
     <div id="div02">
-      <h2><span id="sp11"> Kmeans</span> <span id="sp12"> And </span> <span id="sp13">KNN</span></h2>
-      <h2>
+      <h2 style="color:crimson">
         <12,2,0,0,1>
           <0,1,5,5,1>
       </h2>
@@ -27,14 +46,14 @@
   <div id="body">
 
     <div class="container">
-      <h1>KNN Portal</h1>
+      <h1><span style="color:aliceblue;">KNN Portal</span></h1>
       <div class="row">
         <div class="col">
           <label>
-            <h3>Select A Custom File For KNN</h3>
+            <h3><span style="color:aliceblue;">Select A Custom File For KNN</span></h3>
           </label>
           <br />
-          <input accept=".txt" id="input1" style="color:royalblue" type="file" name="inputfile">
+          <input accept=".txt" id="input1" style="color:rgb(137, 202, 211)" type="file" name="inputfile">
         </div>
       </div>
       <br />
@@ -48,13 +67,13 @@
         <div class="row">
           <div class="col">
 
-            <button class="btn btn-outline-primary" id="btn1" onclick="call_python('trainKNN')">Generate Training Vectors</button>
+            <button class="btn btn-outline-danger" id="btn1" onclick="call_python('trainKNN')">Generate Training Vectors</button>
           </div>
           <div class="col">
-            <button class="btn btn-outline-primary" id="btn1" onclick="call_python('seeList')">See Test Documents List</button>
+            <button class="btn btn-outline-danger" id="btn1" onclick="call_python('seeList')">See Test Documents List</button>
           </div>
           <div class="col">
-            <button class="btn btn-outline-primary" id="btn1" onclick="call_python('testKNN')">Test KNN with remaining
+            <button class="btn btn-outline-danger" id="btn1" onclick="call_python('testKNN')">Test with remaining
               Data</button>
           </div>
         </div>
@@ -67,32 +86,10 @@
 
     <div class="container " id="answer" style="white-space: pre-wrap">
     </div>
-    <hr class="rounded">
-<!--  -->
-<!--  -->
-<!--  -->
-    <div class="container">
-      <h1>Kmeans Portal</h1>
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col">
 
-            <button class="btn btn-outline-primary" id="btn1" onclick="call_python('trainKmeans')">Geenrate Kmeans Vectors</button>
-          </div>
-          <div class="col">
-            <button class="btn btn-outline-primary" id="btn1" onclick="call_python('testKmeans')">Run Clustering
-              Data</button>
-          </div>
-        </div>
-      </div>
-      <h5 id="Alert1" style="color: red;margin-left: 23%;margin-top: 10px;"></h5>
+ 
 
-    </div>
-    <br />
-    <br />
-
-    <div class="container " id="answer1" style="white-space: pre-wrap">
-    </div>
+ 
   </div>
   <script type="text/javascript" src="/eel.js"></script>
   <script type="text/javascript">

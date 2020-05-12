@@ -20,7 +20,9 @@ Lposting = []
 
 
 ######Vctor Generater#########     O(n1+n2)
-def generate( ref_words, doc_freq, tokens, tf, i,n):  #Genrates Vector
+def generate( ref_words, doc_freq, tokens, tf, i,n,y1):  #Genrates Vector
+    # print(list(zip(ref_words,y1)))
+    # exit()
     n1 = len(ref_words)               #Vector Length I equal to total no of terms
     n2 = len(tokens)                    #Terms length in current docs
     dot = 0
@@ -30,22 +32,26 @@ def generate( ref_words, doc_freq, tokens, tf, i,n):  #Genrates Vector
     vector = []
     while(k < n2 and j < n1 and tokens[k] != ''):   #Make vector untill terms in current doc ends 
         if(ref_words[j] != tokens[k]):
-            vector.append(0)
+            if(y1[j]>2):
+                vector.append(0)
             j += 1
         else:
             ###########################
-
-            weight = (float(tf[k])/(len(tf)))*math.log10((n)/int(doc_freq[j]))
-            dot += pow(weight, 2)                               #Calculation of tf^2 for getting Normalization
+            if(int(y1[j])>2):
+                weight = (float(tf[k])/(len(tf)))*math.log10((n)/int(doc_freq[j]))
+                dot += pow(weight, 2)
+                vector.append(weight)
+                                        #Calculation of tf^2 for getting Normalization
             j += 1
             k += 1
-            vector.append(weight)
+            
           
     while(j < n1):                                         #cat remaining term weights as zero
         if(ref_words[j] == ''):
             j += 1
             continue
-        vector.append(0)
+        if(y1[j]>2):
+            vector.append(0)
         j += 1
     while(k < n2):
         print(tokens)
@@ -56,7 +62,7 @@ def generate( ref_words, doc_freq, tokens, tf, i,n):  #Genrates Vector
     return dot,vector
 
 #############Vector GEnerator  O(56)#####################################
-def generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder):
+def generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder,y1):
 
     n = len(doc_vocab)
     
@@ -67,12 +73,15 @@ def generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder):
     for i,value in doc_vocab.items():
         tokens = doc_vocab[i]
         tf = doc_tf[i]
-        dot,vector = generate(ref_words, doc_freq, tokens, tf, i ,n)
+        dot,vector = generate(ref_words, doc_freq, tokens, tf, i ,n,y1)
         vectors[str(i)] = vector
         weights.append(math.sqrt(dot))
 
     file = open('./{}/Corpus.txt'.format(folder),'w')
     file.write(",".join(map(str, all_vocab)))
+    file.close()
+    file = open('./{}/allTermFreq.txt'.format(folder),'w')
+    file.write(",".join(map(str, y1)))
     file.close()
     file = open('./{}/DocumentFrequency.txt'.format(folder),'w')
     file.write(",".join(map(str, all_tf)))
@@ -130,10 +139,11 @@ def mergeSort( arr, l, r):
         mergeSort(arr, m+1, r)
         merge(arr, l, m, r)
 
-def mergelists( x1, x2, ind, doc_freq):
+def mergelists( x1, x2,y1,y2, ind, doc_freq):
     n1 = len(x1)
     n2 = len(x2)
     word = []
+    tf = []
     freq_list = []
 # Merge the temp arrays back into arr[l..r]
     i = 0     # Initial index of first subarray
@@ -151,16 +161,19 @@ def mergelists( x1, x2, ind, doc_freq):
 
         if x1[i] < x2[j]:
             word.append(x1[i])  # Send Word To Dictionary
+            tf.append(y1[i])
             freq_list.append(doc_freq[i])  # Append Previous Frequency
             i += 1
         elif x1[i] > x2[j]:  # Attach Document and Position since Second list's doc is smaller
             word.append(x2[j])
+            tf.append(y2[j])
             freq_list.append(1)  # New Word Append 1 as frequency
             j += 1
         else:
 
             # Documewnts are same so join <docNo> and both postion Lists
             word.append(x1[i])
+            tf.append(y1[i]+y2[j])
             freq_list.append(doc_freq[i]+1)  # Join Previous Frequency + 1
             i += 1
             j += 1
@@ -172,6 +185,7 @@ def mergelists( x1, x2, ind, doc_freq):
             i += 1
             continue
         word.append(x1[i])
+        tf.append(y1[i])
         freq_list.append(doc_freq[i])
         i += 1
 
@@ -182,9 +196,10 @@ def mergelists( x1, x2, ind, doc_freq):
             j += 1
             continue
         word.append(x2[j])
+        tf.append(y2[j])
         freq_list.append(1)
         j += 1
-    return word, freq_list
+    return word, freq_list,tf
 def tokenizer(files,stopwords,Class,doc_vocab,doc_tf,num):
     global Ltoken
 #Tokenize stem fold case of words
@@ -245,7 +260,8 @@ def tokenizer(files,stopwords,Class,doc_vocab,doc_tf,num):
     
     return num
 def Processor(doc_vocab,doc_tf,folder):
-    print("IN fucntion Processor")    
+    print("IN fucntion Processor")
+        
     x1 = doc_vocab[list(doc_vocab.keys())[0]]
     y1 = doc_tf[list(doc_vocab.keys())[0]]
     doc_freq = [1]*len(x1)
@@ -255,16 +271,17 @@ def Processor(doc_vocab,doc_tf,folder):
             count+=1
             continue
         x2 = doc_vocab[i]
-        y2 = doc_tf
-        x1, doc_freq = mergelists(x1, x2, i, doc_freq)
+        y2 = doc_tf[i]
+        x1, doc_freq,y1 = mergelists(x1, x2,y1,y2, i, doc_freq)
     all_vocab = []
          #Writing Doc Frequency
+
     for i in range(len(x1)):
         all_vocab.append(x1[i])
-        all_tf = []
+    all_tf = []
     for i in range(len(doc_freq)):
         all_tf.append(doc_freq[i])
-    generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder)    
+    generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder,y1)    
 
 
 
@@ -411,13 +428,13 @@ def uc_distance(query,corpus):
     ans = 0
     for key,value in corpus:
         try:
-            ans+=value+query[key]
+            ans+= (value-query[key])**2
         except:
-            ans+=value
-    return ans
+            ans+= value**2
+    return math.sqrt(ans)
     
 
-def fetch_docs( parsed, query_tf, results,all_vectors,weights,documentFreq,corpus):
+def fetch_docs( parsed, query_tf, results,all_vectors,weights,documentFreq,corpus,all_tf):
     n = len(all_vectors)
     #print(results)
     query_vector = []
@@ -425,11 +442,16 @@ def fetch_docs( parsed, query_tf, results,all_vectors,weights,documentFreq,corpu
     ########
     weight = []
     print("Genrating Vector From Query")
-    for i in range(len(results)):     #Making Vector from query term tf
+    for i in range(len(results)-1,-1,-1):     #Making Vector from query term tf
         print("Document Frequency of {} = {}".format(
             parsed[i], doc_freq[results[i]]))
-        query_vector.append( (math.log10(n/int(doc_freq[results[i]])))* (query_tf[i]/len(query_tf)) )
-        print("{}-->{}".format(parsed[i],(math.log10(int(doc_freq[results[i]]))/56)*query_tf[i]))
+        
+        if(int(all_tf[results[i]])>2):
+            query_vector.append( (math.log10(n/int(doc_freq[results[i]])))* (query_tf[i]/len(query_tf)) )
+            print("{}-->{}".format(parsed[i],(math.log10(int(doc_freq[results[i]]))/56)*query_tf[i]))
+        else:
+            results.pop(i)
+
     print("------------")
     print("Query Vector")
     print(query_vector)
@@ -449,9 +471,12 @@ def fetch_docs( parsed, query_tf, results,all_vectors,weights,documentFreq,corpu
         print("Vector For Doc {}".format(i))
         print("<",end='')
         for j in range(len(query_vector)):
-            print("{},".format(vector[results[j]]),end=' ')
-            ans = ans+ query_vector[j]*float(vector[results[j]])
-            a += pow(query_vector[j], 2)
+            try:
+                print("{},".format(vector[results[j]]),end=' ')
+                ans = ans+ query_vector[j]*float(vector[results[j]])
+                a += pow(query_vector[j], 2)
+            except:
+                pass
         print(">")
         b = float(normal_vectors[itr])
         itr+=1
@@ -484,11 +509,16 @@ class KNN():
             file=open('./KNN/vector.json','r')
             self.vectors = json.load(file)
             file.close()
+
+            file = open('./KNN/allTermFreq.txt','r')
+            self.all_tf = file.read().split(',')
+            file.close()
         except:
             self.corpus = None
             self.documentFreq = None
             self.weights = None
             self.vectors = None
+            self.all_tf = None
     def train_KNN(self):
         test = {}
         doc_vocab = {}
@@ -496,7 +526,7 @@ class KNN():
         num = 1
         P1 = os.listdir('./bbcsport-fulltext/bbcsport/')
         stopwords = []
-        s = open('Stopword-List.txt', 'r')  # picking stopwords
+        s = open('Stopword-List1.txt', 'r')  # picking stopwords
         stopdoc = s.read()
         w = ''
         for i in range(len(stopdoc)):
@@ -550,7 +580,7 @@ class KNN():
                         parsed.pop(i)
                         results.pop(i)
                         query_tf.pop(i)
-                result = fetch_docs(parsed,query_tf,results,self.vectors,self.weights,self.documentFreq,self.corpus)
+                result = fetch_docs(parsed,query_tf,results,self.vectors,self.weights,self.documentFreq,self.corpus,self.all_tf)
                 docs = []
                 for i, arr in self.vectors.items():
                     docs.append(i)
@@ -576,7 +606,7 @@ class KNN():
                 parsed.pop(i)
                 results.pop(i)
                 query_tf.pop(i)
-        result = fetch_docs(parsed,query_tf,results,self.vectors,self.weights,self.documentFreq,self.corpus)
+        result = fetch_docs(parsed,query_tf,results,self.vectors,self.weights,self.documentFreq,self.corpus,self.all_tf)
         docs = []
         for i, arr in self.vectors.items():
             docs.append(i)
@@ -698,7 +728,7 @@ class Kmeans():
         cluster['c4'] = []
         cluster['c5'] = []
         num = 1
-        print(len(centroids))
+        
         while True and num<max_iter:
             print("Clusetering Round {}".format(num))
             num+=1
@@ -741,25 +771,6 @@ class Kmeans():
 
 
 
-
-#kmean = Kmeans()
-#kmean.run_K_mean(max_iter=7)
-# kmean.train_Kmean()
-# knn = KNN()
-# knn.train_KNN()
-# knn.run_KNN()
-#kmean.run_K_mean(max_iter=3)
-
-# from sklearn.cluster import KMeans
-# file = open('./Kmean/vector.json','r')
-# vectors = json.load(file)
-# data =[]
-# for key,value in vectors.items():
-#     data.append(value)
-# print("Start")
-# kmeans = KMeans(n_clusters=5, random_state=0).fit(data)
-# print(kmeans.labels_)
-# Set web files folder
 eel.init('web')
 import time
 @eel.expose                         # Expose this function to Javascript
@@ -775,26 +786,26 @@ def say_hello_py(text,func):
         file = open('./KNN/testDocs.txt','r')
         test = json.load(file)
         file.close()
-        text = "<h3>Seperated Test Files</h3><br/>"
+        text = "<h3><span style='color:yellow'>Seperated Test Files</span></h3><br/>"
         for key,value in test.items():
-            text+="<h5 style='color:#F9008C'>{}</h5 style='color:#00A1F9'><p>{}</p>".format(key,value)
+            text+="<h5 style='color:#F9008C'>{}</h5 style='color:#00A1F9'><p style='color:yellow'>{}</p>".format(key,value)
         return text
     elif func=='testKNN':
         eel.say_hello_js("Working on 30% Test Data ...")
         accuracy,confusion = knn.run_KNN()
         eel.say_hello_js("Testing Completed. Fetching Results")
         time.sleep(1) 
-        text = "<div style='color:#BD00F9'>Accuracy Score = {}</div>".format(accuracy)
-        text+="<div>Atual on x, Predicted on y</div>"
-        text+="<div> At Cr Ft Rg Tn</div>"
-        text+= "<div style='color:#F9008C'>{}</div>".format(confusion)
+        text = "<div style='color:rgb(137, 202, 211);font-size:large;'>Accuracy Score = {}</div>".format(accuracy)
+        text+="<div style='color:rgb(137, 202, 211);font-size:large;'>Atual on x, Predicted on y</div>"
+        text+="<div style='color:rgb(137, 202, 211);'> At Cr Ft Rg Tn</div>"
+        text+= "<div style='color:aliceblue;'>{}</div>".format(confusion)
         return text
     elif func=='predictKNN':
         eel.say_hello_js("Working On Your Document")
         time.sleep(1)
         pred = knn.predict_text(text)
         eel.say_hello_js("Here We Go...")
-        text = "<div style='font-size: large;font-weight: bolder; color:#BF0789'>Your Document Belongs To {} Class</div>".format(pred)
+        text = "<div style='font-size: larger;font-weight: bolder; color:yellow'>Your Document Belongs To {} Class</div>".format(pred)
         return text 
     elif func=='trainKmeans':
         eel.say_hello_js1("Generating Vectors For Kmean Clustering")
@@ -803,16 +814,16 @@ def say_hello_py(text,func):
         return
     elif func=='testKmeans':
         eel.say_hello_js1("Genrating Clusters Please Wait..")
-        cluster = kmean.run_K_mean()
+        cluster = kmean.run_K_mean(max_iter=int(text))
         eel.say_hello_js1("Here We Go..")
-        text = "<div>{}</div>".format(cluster)
+        text = "<div style='color:yellow'>{}</div>".format(cluster)
         return text
     elif func == 'seeList':
         file = open('./KNN/testDocs.txt','r')
         data = json.load(file)
-        text = "<h3>Seperated Test Files</h3><br/>"
+        text = "<h3><span style='color:yellow'>Seperated Test Files</span></h3><br/>"
         for key,value in data.items():
-            text+="<h5 style='color:#F9008C'>{}</h5 style='color:#00A1F9'><p>{}</p>".format(key,value)
+            text+="<h5 style='color:#F9008C'>{}</h5 style='color:#00A1F9'><p style='color:yellow'>{}</p>".format(key,value)
         return text
    # Call a Javascript function
 eel.start('index.html', size=(1000, 1080))
