@@ -1,5 +1,4 @@
 from __future__ import print_function	# For Py2/3 compatibility
-from nltk.stem import WordNetLemmatizer 
 import math  
 from nltk.stem.porter import *
 import nltk
@@ -12,9 +11,13 @@ import random
 import  copy
 import glob
 import os
+from scipy.spatial import distance
+import numpy as np
+import time
+
+
 # nltk.download('wordnet')
 stemmer = PorterStemmer()
-lemmatizer = WordNetLemmatizer() 
 Ltoken = []
 Lposting = []
 
@@ -613,7 +616,7 @@ class KNN():
 
 class Kmeans():
 
-
+    number = 1
     def train_Kmean(self):
         test = {}
         doc_vocab = {}
@@ -645,39 +648,51 @@ class Kmeans():
 
     def uclidean_distance(self,centroids,vector,key,cluster):
         result = {}
-        ans1 = ans2 = ans3 = ans4 = ans5 = 0
-        for j in range(len(centroids[0])):
-            ans1 += pow( (centroids[0][j] - vector[j]) , 2 )
-            ans2 += pow( (centroids[1][j] - vector[j]) , 2 )
-            ans3 += pow( (centroids[2][j] - vector[j]) , 2 )
-            ans4 += pow( (centroids[3][j] - vector[j]) , 2 )
-            ans5 += pow( (centroids[4][j] - vector[j]) , 2 )
-        result['c1'] = math.sqrt(ans1)
-        result['c2'] = math.sqrt(ans2)
-        result['c3'] = math.sqrt(ans3)
-        result['c4'] = math.sqrt(ans4)
-        result['c5'] = math.sqrt(ans5)
+        #ans1 = ans2 = ans3 = ans4 = ans5 = 0
+        # for j in range(len(centroids[0])):
+        #     ans1 += pow( (centroids[0][j] - vector[j]) , 2 )
+        #     ans2 += pow( (centroids[1][j] - vector[j]) , 2 )
+        #     ans3 += pow( (centroids[2][j] - vector[j]) , 2 )
+        #     ans4 += pow( (centroids[3][j] - vector[j]) , 2 )
+        #     ans5 += pow( (centroids[4][j] - vector[j]) , 2 )
+        # result['c1'] = math.sqrt(ans1)
+        # result['c2'] = math.sqrt(ans2)
+        # result['c3'] = math.sqrt(ans3)
+        # result['c4'] = math.sqrt(ans4)
+        # result['c5'] = math.sqrt(ans5)
+        
+
+        result['c1'] = distance.euclidean(centroids[0], vector)
+        result['c2'] = distance.euclidean(centroids[1], vector)
+        result['c3'] = distance.euclidean(centroids[2], vector)
+        result['c4'] = distance.euclidean(centroids[3], vector)
+        result['c5'] = distance.euclidean(centroids[4], vector)
         result  = sorted(result.items(), key=lambda x: x[1])
         result = dict(result)
-        print(result)
+        #print(result)
         cluster[list(result.keys())[0]].append(key)
-
-
+        
+        
     
 
     def calculate_centroid(self,value1,vectors):
         try:
-            ans = vectors[value1[0]]
+            #ans = vectors[value1[0]]
+            ans1 = np.array(vectors[value1[0]])
+
         except:
             return
         
         n = len(value1)
         for i in range(1,n):
-            new = vectors[value1[i]]
-            for j in range(len(ans)):
-                ans[j]+=new[j]
-        ans = [a/n for a in ans]
-        return ans
+            #new = vectors[value1[i]]
+            new1 = np.array(vectors[value1[i]])
+            ans1 = np.add(ans1,new1)
+            #for j in range(len(ans)):
+             #   ans[j]+=new[j]
+        ans1 = np.divide(ans1,n)
+        #ans = [a/n for a in ans]
+        return list(ans1)
 
     def run_K_mean(self,max_iter = 5):
         text = ""
@@ -691,8 +706,8 @@ class Kmeans():
         clist = []
         centroids = []
         for i in range(5):
-            #num = random.randint(0,len(vectors))
-            vec = list(vectors.keys())[i]
+            num = random.randint(0,len(vectors))
+            vec = list(vectors.keys())[num]
             if vec in clist:
                 i-=1
                 continue
@@ -724,11 +739,13 @@ class Kmeans():
                 break
             else:
                 old_cluster = copy.deepcopy(cluster)
+                #old_centroids = copy.deepcopy(centroids)
                 centroids = []
                 for key1,value1 in cluster.items():
                     print("Elements in cluster {} = {}".format(key1,len(value1)))
-                    centre = self.calculate_centroid(value1,vectors)
+                    centre = self.calculate_centroid(value1,vectors)                   
                     centroids.append(centre)
+                
                 if(num<max_iter):
                     for key1,value1 in cluster.items():
                         value1.clear()
