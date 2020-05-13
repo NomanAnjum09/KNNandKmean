@@ -4,7 +4,10 @@ file = open('./Kmean/vector.json')
 data = json.load(file)
 file.close()
 
-
+for key,value in data.items():
+    print(len(value))
+    
+exit()
 # file = open('./Kmean/Corpus.txt')
 # corpus = file.read().split(',')
 # file.close()

@@ -55,6 +55,7 @@
         <!--  -->
         <div class="container">
             <h1><span style="color:aliceblue;">Kmeans  Portal</span></h1>
+            <h2><span id="featureSize" style="color:aliceblue;"></span></h2>
             <div class="container-fluid">
                 <div class="row">
                     <div class="col">
@@ -84,6 +85,9 @@
     </div>
     <script type="text/javascript" src="/eel.js"></script>
     <script type="text/javascript">
+    window.onload = function() {
+    eel.say_hello_py(text, 'featureSize')
+    }
         var text = ""
         var choice = true
         var response = ""
@@ -96,6 +100,11 @@
         function say_hello_js1(x) {
             console.log("kasjasdjk")
             document.getElementById("Alert1").innerHTML = x;
+        }
+        eel.expose(setFeatureSize);               // Expose this function to Python
+        function setFeatureSize(x) {
+            console.log("kasjasdjk")
+            document.getElementById("featureSize").innerHTML = x;
         }
 
         function call_python(param) {

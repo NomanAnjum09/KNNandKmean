@@ -23,7 +23,7 @@ Lposting = []
 
 
 ######Vctor Generater#########     O(n1+n2)
-def generate( ref_words, doc_freq, tokens, tf, i,n):  #Genrates Vector
+def generate( ref_words, doc_freq, tokens, tf, i,n,y1,folder):  #Genrates Vector
     n1 = len(ref_words)               #Vector Length I equal to total no of terms
     n2 = len(tokens)                    #Terms length in current docs
     dot = 0
@@ -33,22 +33,33 @@ def generate( ref_words, doc_freq, tokens, tf, i,n):  #Genrates Vector
     vector = []
     while(k < n2 and j < n1 and tokens[k] != ''):   #Make vector untill terms in current doc ends 
         if(ref_words[j] != tokens[k]):
-            vector.append(0)
+            if folder == 'KNN':
+                vector.append(0)
+            elif y1[j]>4:
+                vector.append(0)
             j += 1
         else:
             ###########################
-
-            weight = (float(tf[k]))*math.log10((n)/int(doc_freq[j]))
-            dot += pow(weight, 2)                               #Calculation of tf^2 for getting Normalization
+            if folder == 'KNN':
+                weight = (float(tf[k]))*math.log10((n)/int(doc_freq[j]))
+                dot += pow(weight, 2)                               #Calculation of tf^2 for getting Normalization
+                vector.append(weight)
+            elif y1[j]>4:
+                weight = (float(tf[k])/len(tf))*math.log10((n+1)/int(doc_freq[j]))
+                #weight = float(tf[k])
+                dot += pow(weight, 2)                               #Calculation of tf^2 for getting Normalization
+                vector.append(weight)
             j += 1
             k += 1
-            vector.append(weight)
           
     while(j < n1):                                         #cat remaining term weights as zero
         if(ref_words[j] == ''):
             j += 1
             continue
-        vector.append(0)
+        if folder == 'KNN':
+            vector.append(0)
+        elif y1[j]>4:
+            vector.append(0)
         j += 1
     while(k < n2):
         print(tokens)
@@ -59,7 +70,7 @@ def generate( ref_words, doc_freq, tokens, tf, i,n):  #Genrates Vector
     return dot,vector
 
 #############Vector GEnerator  O(56)#####################################
-def generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder):
+def generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder,y1):
 
     n = len(doc_vocab)
     
@@ -70,7 +81,7 @@ def generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder):
     for i,value in doc_vocab.items():
         tokens = doc_vocab[i]
         tf = doc_tf[i]
-        dot,vector = generate(ref_words, doc_freq, tokens, tf, i ,n)
+        dot,vector = generate(ref_words, doc_freq, tokens, tf, i ,n ,y1 ,folder)
         vectors[str(i)] = vector
         weights.append(math.sqrt(dot))
 
@@ -94,6 +105,10 @@ def generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder):
         file.close()
         file = open('./{}/Weights.txt'.format(folder),'w')
         file.write(",".join(map(str, weights)))
+        file.close()
+    if(folder =='Kmean'):
+        file = open('./{}/allTermFreq.txt'.format(folder),'w')
+        file.write(",".join(map(str, y1)))
         file.close()
     file  = open('./{}/vector.json'.format(folder),'w')
     json.dump(vectors,file)
@@ -145,10 +160,11 @@ def mergeSort( arr, l, r):
         mergeSort(arr, m+1, r)
         merge(arr, l, m, r)
 
-def mergelists( x1, x2, ind, doc_freq):
+def mergelists( x1, x2,y1,y2, ind, doc_freq):
     n1 = len(x1)
     n2 = len(x2)
     word = []
+    tf = []
     freq_list = []
 # Merge the temp arrays back into arr[l..r]
     i = 0     # Initial index of first subarray
@@ -166,16 +182,19 @@ def mergelists( x1, x2, ind, doc_freq):
 
         if x1[i] < x2[j]:
             word.append(x1[i])  # Send Word To Dictionary
+            tf.append(y1[i])
             freq_list.append(doc_freq[i])  # Append Previous Frequency
             i += 1
         elif x1[i] > x2[j]:  # Attach Document and Position since Second list's doc is smaller
             word.append(x2[j])
+            tf.append(y2[j])
             freq_list.append(1)  # New Word Append 1 as frequency
             j += 1
         else:
 
             # Documewnts are same so join <docNo> and both postion Lists
             word.append(x1[i])
+            tf.append(y1[i]+y2[j])
             freq_list.append(doc_freq[i]+1)  # Join Previous Frequency + 1
             i += 1
             j += 1
@@ -187,6 +206,7 @@ def mergelists( x1, x2, ind, doc_freq):
             i += 1
             continue
         word.append(x1[i])
+        tf.append(y1[i])
         freq_list.append(doc_freq[i])
         i += 1
 
@@ -197,9 +217,10 @@ def mergelists( x1, x2, ind, doc_freq):
             j += 1
             continue
         word.append(x2[j])
+        tf.append(y2[j])
         freq_list.append(1)
         j += 1
-    return word, freq_list
+    return word, freq_list,tf
 def tokenizer(files,stopwords,Class,doc_vocab,doc_tf):
     global Ltoken
 #Tokenize stem fold case of words
@@ -273,8 +294,8 @@ def Processor(doc_vocab,doc_tf,folder):
             count+=1
             continue
         x2 = doc_vocab[i]
-        y2 = doc_tf
-        x1, doc_freq = mergelists(x1, x2, i, doc_freq)
+        y2 = doc_tf[i]
+        x1, doc_freq,y1 = mergelists(x1, x2,y1,y2, i, doc_freq)
     all_vocab = []
          #Writing Doc Frequency
     for i in range(len(x1)):
@@ -282,7 +303,8 @@ def Processor(doc_vocab,doc_tf,folder):
         all_tf = []
     for i in range(len(doc_freq)):
         all_tf.append(doc_freq[i])
-    generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder)    
+    generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder,y1)
+    print("Vectors Generated Succesfully")    
 
 
 
@@ -660,13 +682,14 @@ class Kmeans():
         # result['c3'] = math.sqrt(ans3)
         # result['c4'] = math.sqrt(ans4)
         # result['c5'] = math.sqrt(ans5)
-        
-
+        ####lib1
         result['c1'] = distance.euclidean(centroids[0], vector)
         result['c2'] = distance.euclidean(centroids[1], vector)
         result['c3'] = distance.euclidean(centroids[2], vector)
         result['c4'] = distance.euclidean(centroids[3], vector)
         result['c5'] = distance.euclidean(centroids[4], vector)
+       
+        
         result  = sorted(result.items(), key=lambda x: x[1])
         result = dict(result)
         #print(result)
@@ -694,7 +717,7 @@ class Kmeans():
         #ans = [a/n for a in ans]
         return list(ans1)
 
-    def run_K_mean(self,max_iter = 5):
+    def run_K_mean(self,max_iter):
         text = ""
         try:
             file = open('./Kmean/vector.json','r')
@@ -784,7 +807,7 @@ import time
 def say_hello_py(text,func):
     knn = KNN()
     kmean = Kmeans()
-    kmean = Kmeans()
+    
     if func=='trainKNN':   
         eel.say_hello_js("Generating Vectors From 70% Data ...")
         knn.train_KNN()
@@ -818,10 +841,17 @@ def say_hello_py(text,func):
         eel.say_hello_js1("Generating Vectors For Kmean Clustering")
         kmean.train_Kmean()
         eel.say_hello_js1("Kmeans Vectors Genrated")
+        file = open('./Kmean/vector.json')
+        fsize = json.load(file)
+        file.close()
+        for key,value in fsize.items():
+            eel.setFeatureSize("Feauture Set Size = {}".format(len(value)))
+            break
         return
     elif func=='testKmeans':
         eel.say_hello_js1("Genrating Clusters Please Wait..")
-        cluster = kmean.run_K_mean(max_iter=int(text))
+        print(int(text,base=10))
+        cluster = kmean.run_K_mean(max_iter=int(text , base=10))
         eel.say_hello_js1("Here We Go..")
         text = "<div style='color:yellow'>{}</div>".format(cluster)
         return text
@@ -832,5 +862,15 @@ def say_hello_py(text,func):
         for key,value in data.items():
             text+="<h5 style='color:#F9008C'>{}</h5 style='color:#00A1F9'><p style='color:yellow'>{}</p>".format(key,value)
         return text
+    elif func=='featureSize':
+        try:
+            file = open('./Kmean/vector.json')
+            fsize = json.load(file)
+            file.close()
+            for key,value in fsize.items():
+                eel.setFeatureSize("Feauture Set Size = {}".format(len(value)))
+                break
+        except:
+            eel.setFeatureSize("Vectors Not Generated Yet")
    # Call a Javascript function
 eel.start('index.html', size=(1000, 1080))
