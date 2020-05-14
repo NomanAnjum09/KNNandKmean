@@ -60,17 +60,31 @@
                 <div class="row">
                     <div class="col">
 
-                        <button class="btn btn-outline-danger" id="btn1" onclick="call_python('trainKmeans')">Generate
+                        <button class="btn btn-outline-danger" style="margin-left:30%" id="btn1" onclick="call_python('trainKmeans')">Generate
                             Kmeans Vectors</button>
                     </div>
                 </div>
                 <br />
+                <div class="row" style="margin-left:20%">
+                <div class="col">
                 <label>
                     <h3><span style="color:aliceblue;">Enter No Of Iterations</span></h3>
                 </label>
                 <input id="input1" class="form-control" value="5" style="color:dodgerblue;width: 20%;" autofocus>
+                </div>
+                <div class="col">
+                
+                 <label>
+                    <h3><span style="color:aliceblue;">Enter No Of Clusters</span></h3>
+                </label>
+                <input id="input2" class="form-control" value="5" style="color:dodgerblue;width: 20%;" autofocus>
+                
+                </div>
+
+
+                </div>
                 <br />
-                <button class="btn btn-outline-danger" id="btn1" onclick="call_python('testKmeans')">Generate
+                <button class="btn btn-outline-danger" style="margin-left:35%" id="btn1" onclick="call_python('testKmeans')">Generate
                     Clusters</button>
 
             </div>
@@ -124,15 +138,17 @@
             }
             else if (param === 'testKmeans') {
                 var iter = document.getElementById('input1').value
-                if (iter === "") {
-                    document.getElementById('Alert1').innerHTML = "Please Enter Value For Iterations"
+                var clusters = document.getElementById('input2').value
+
+                if (iter === "" || clusters === "") {
+                    document.getElementById('Alert1').innerHTML = "Please Input All Fields .."
                     return
                 }
                 var decimal = /^-?\d*(\.\d+)?$/;
-                if (!(iter.match(decimal))) {
-                    document.getElementById("Alert").innerHTML = "Invalid No Of Iterations ...."
+                if (!(iter.match(decimal)) || !(clusters.match(decimal))) {
+                    document.getElementById("Alert1").innerHTML = "Invalid Input ...."
                     return}
-                    eel.say_hello_py(iter, param)(function (result) {
+                    eel.say_hello_py(iter+','+clusters, param)(function (result) {
                         document.getElementById("answer1").innerHTML = result
                     })
                 } 

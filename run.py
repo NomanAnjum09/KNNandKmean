@@ -35,7 +35,7 @@ def generate( ref_words, doc_freq, tokens, tf, i,n,y1,folder):  #Genrates Vector
         if(ref_words[j] != tokens[k]):
             if folder == 'KNN':
                 vector.append(0)
-            elif y1[j]>4:
+            elif y1[j]>2:
                 vector.append(0)
             j += 1
         else:
@@ -44,7 +44,7 @@ def generate( ref_words, doc_freq, tokens, tf, i,n,y1,folder):  #Genrates Vector
                 weight = (float(tf[k]))*math.log10((n)/int(doc_freq[j]))
                 dot += pow(weight, 2)                               #Calculation of tf^2 for getting Normalization
                 vector.append(weight)
-            elif y1[j]>4:
+            elif y1[j]>2:
                 weight = (float(tf[k])/len(tf))*math.log10((n+1)/int(doc_freq[j]))
                 #weight = float(tf[k])
                 dot += pow(weight, 2)                               #Calculation of tf^2 for getting Normalization
@@ -58,7 +58,7 @@ def generate( ref_words, doc_freq, tokens, tf, i,n,y1,folder):  #Genrates Vector
             continue
         if folder == 'KNN':
             vector.append(0)
-        elif y1[j]>4:
+        elif y1[j]>2:
             vector.append(0)
         j += 1
     while(k < n2):
@@ -683,11 +683,13 @@ class Kmeans():
         # result['c4'] = math.sqrt(ans4)
         # result['c5'] = math.sqrt(ans5)
         ####lib1
-        result['c1'] = distance.euclidean(centroids[0], vector)
-        result['c2'] = distance.euclidean(centroids[1], vector)
-        result['c3'] = distance.euclidean(centroids[2], vector)
-        result['c4'] = distance.euclidean(centroids[3], vector)
-        result['c5'] = distance.euclidean(centroids[4], vector)
+        for i in range(len(centroids)):
+            result['c'+str(i)] = distance.euclidean(centroids[i], vector) 
+        # result['c1'] = distance.euclidean(centroids[0], vector)
+        # result['c2'] = distance.euclidean(centroids[1], vector)
+        # result['c3'] = distance.euclidean(centroids[2], vector)
+        # result['c4'] = distance.euclidean(centroids[3], vector)
+        # result['c5'] = distance.euclidean(centroids[4], vector)
        
         
         result  = sorted(result.items(), key=lambda x: x[1])
@@ -717,7 +719,7 @@ class Kmeans():
         #ans = [a/n for a in ans]
         return list(ans1)
 
-    def run_K_mean(self,max_iter):
+    def run_K_mean(self,max_iter,no_cluster):
         text = ""
         try:
             file = open('./Kmean/vector.json','r')
@@ -728,7 +730,7 @@ class Kmeans():
             return    
         clist = []
         centroids = []
-        for i in range(5):
+        for i in range(no_cluster):
             num = random.randint(0,len(vectors))
             vec = list(vectors.keys())[num]
             if vec in clist:
@@ -739,17 +741,21 @@ class Kmeans():
                 print(vec)
                 centroids.append(vectors[vec])
         old_cluster = {}
-        old_cluster['c1'] = []
-        old_cluster['c2'] = []
-        old_cluster['c3'] = []
-        old_cluster['c4'] = []
-        old_cluster['c5'] = []
+        for i in range(no_cluster):
+            old_cluster['c'+str(i)]=[]
+        # old_cluster['c1'] = []
+        # old_cluster['c2'] = []
+        # old_cluster['c3'] = []
+        # old_cluster['c4'] = []
+        # old_cluster['c5'] = []
         cluster = {}
-        cluster['c1'] = []
-        cluster['c2'] = []
-        cluster['c3'] = []
-        cluster['c4'] = []
-        cluster['c5'] = []
+        for i in range(no_cluster):
+            cluster['c'+str(i)]=[]
+        # cluster['c1'] = []
+        # cluster['c2'] = []
+        # cluster['c3'] = []
+        # cluster['c4'] = []
+        # cluster['c5'] = []
         num = 1
         print(len(centroids))
         while True and num<max_iter:
@@ -850,8 +856,10 @@ def say_hello_py(text,func):
         return
     elif func=='testKmeans':
         eel.say_hello_js1("Genrating Clusters Please Wait..")
-        print(int(text,base=10))
-        cluster = kmean.run_K_mean(max_iter=int(text , base=10))
+        param = text.split(',')
+        iteration = int(param[0],base=10)
+        no_cluster = int(param[1],base=10)
+        cluster = kmean.run_K_mean(iteration,no_cluster)
         eel.say_hello_js1("Here We Go..")
         text = "<div style='color:yellow'>{}</div>".format(cluster)
         return text
