@@ -1,16 +1,25 @@
 import json
 import math
+
+
 file = open('./Kmean/vector.json')
 data = json.load(file)
 file.close()
+file1 = open('./Vector.csv','w')
 
 for key,value in data.items():
-    print(len(value))
-    
+    file1.write(str(key.split('.')[0]))
+    for i in range(len(value)):
+        file1.write(',')
+        file1.write(str(value[i]))
+    file1.write('\n')
+file1.close()    
 exit()
-# file = open('./Kmean/Corpus.txt')
+# file = open('./Kmean/shortDF.txt')
 # corpus = file.read().split(',')
 # file.close()
+# print(len(corpus))
+# exit()
 # file = open('./Kmean/DocumentFrequency.txt')
 # df = file.read().split(',')
 # file.close()

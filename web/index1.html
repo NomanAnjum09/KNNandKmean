@@ -57,13 +57,22 @@
             <h1><span style="color:aliceblue;">Kmeans  Portal</span></h1>
             <h2><span id="featureSize" style="color:aliceblue;"></span></h2>
             <div class="container-fluid">
-                <div class="row">
-                    <div class="col">
-
-                        <button class="btn btn-outline-danger" style="margin-left:30%" id="btn1" onclick="call_python('trainKmeans')">Generate
-                            Kmeans Vectors</button>
-                    </div>
-                </div>
+                    <div class="row">
+        <div class="col">
+          <label>
+            <h3><span style="color:aliceblue;">Select A Custom File For Kmean</span></h3>
+          </label>
+          <br />
+          <input accept=".txt" id="inputfile" style="color:rgb(137, 202, 211)" type="file" name="inputfile">
+        </div>
+      </div>
+      <br />
+      <div class="row">
+        <div class="col"> <button class="btn btn-warning" id="btn1" onclick="call_python('predictKMean')">Predict Class</button>
+        </div>
+        <div class="col" id="KmeanPredcition"></div>
+      </div>
+      <br /><br />
                 <br />
                 <div class="row" style="margin-left:20%">
                 <div class="col">
@@ -83,9 +92,23 @@
 
 
                 </div>
-                <br />
-                <button class="btn btn-outline-danger" style="margin-left:35%" id="btn1" onclick="call_python('testKmeans')">Generate
+                <br /><br />
+                <div class="row">
+                 <div class="col">
+
+                        <button class="btn btn-outline-danger" id="btn1"  onclick="call_python('trainKmeans')">Generate
+                            Kmeans Vectors</button>
+                    </div>
+                    <div class="col">
+                <button class="btn btn-outline-danger" style="margin-left:10%"  id="btn1" onclick="call_python('seeCluster')">See
                     Clusters</button>
+                    </div>
+                    <div class="col">
+                <button class="btn btn-outline-danger"  id="btn1" onclick="call_python('testKmeans')">Generate
+                    Clusters</button>
+                    </div>
+                    
+                    </div>
 
             </div>
             <h5 id="Alert1" style="color: red;margin-left: 23%;margin-top: 10px;"></h5>
@@ -122,13 +145,10 @@
         }
 
         function call_python(param) {
-            if (param === 'predict') {
-                if (text === "") {
-                    document.getElementById('Alert').innerHTML = "Please Select A Document First"
-                    return
-                }
-                eel.say_hello_py(text, 'predictKNN')(function (result) {
-                    document.getElementById('KNNPredcition').innerHTML = result
+            
+            if (param==='seeCluster'){
+                eel.say_hello_py('', param)(function (result) {
+                    document.getElementById("answer1").innerHTML = result
                 })
             }
             else if (param === "trainKmeans") {
@@ -153,13 +173,24 @@
                     })
                 } 
                 else {
-                    eel.say_hello_py('', param)(function (result) {
-                        document.getElementById("answer").innerHTML = result
+                    eel.say_hello_py(text, param)(function (result) {
+                        document.getElementById("KmeanPredcition").innerHTML = result
                     });  // Call a Python function
 
                 }}
             
 
+
+document.getElementById('inputfile')
+      .addEventListener('change', function () {
+
+        var fr = new FileReader();
+        fr.onload = function () {
+          text = fr.result;
+        }
+
+        fr.readAsText(this.files[0]);
+      }) 
     </script>
 
 </body>

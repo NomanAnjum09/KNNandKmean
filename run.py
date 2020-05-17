@@ -5,8 +5,7 @@ import nltk
 import json
 import statistics 
 import eel
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix,accuracy_score
 import random
 import  copy
 import glob
@@ -14,22 +13,21 @@ import os
 from scipy.spatial import distance
 import numpy as np
 import time
-
-
+from sklearn.metrics.pairwise import manhattan_distances
+#####################
+#Features Having count>3 in all docs are selected for KMeans#
 # nltk.download('wordnet')
 stemmer = PorterStemmer()
 Ltoken = []
 Lposting = []
 
-
 ######Vctor Generater#########     O(n1+n2)
-def generate( ref_words, doc_freq, tokens, tf, i,n,y1,folder):  #Genrates Vector
+def generate( ref_words, doc_freq, tokens, tf, i,n,y1,folder,file,file1,num):  #Genrates Vector
     n1 = len(ref_words)               #Vector Length I equal to total no of terms
     n2 = len(tokens)                    #Terms length in current docs
     dot = 0
     j = 0
-    k = 0
-    
+    k = 0    
     vector = []
     while(k < n2 and j < n1 and tokens[k] != ''):   #Make vector untill terms in current doc ends 
         if(ref_words[j] != tokens[k]):
@@ -37,16 +35,25 @@ def generate( ref_words, doc_freq, tokens, tf, i,n,y1,folder):  #Genrates Vector
                 vector.append(0)
             elif y1[j]>2:
                 vector.append(0)
+                if(num==1):
+                    file.write(ref_words[j])
+                    file1.write(str(doc_freq[j]))
+                    file1.write(',')
+                    file.write(',')
             j += 1
         else:
-            ###########################
             if folder == 'KNN':
                 weight = (float(tf[k]))*math.log10((n)/int(doc_freq[j]))
                 dot += pow(weight, 2)                               #Calculation of tf^2 for getting Normalization
                 vector.append(weight)
             elif y1[j]>2:
-                weight = (float(tf[k])/len(tf))*math.log10((n+1)/int(doc_freq[j]))
-                #weight = float(tf[k])
+                if(num==1):
+                    file.write(ref_words[j])
+                    file.write(',')
+                    file1.write(str(doc_freq[j]))
+                    file1.write(',')
+                #weight = (float(tf[k])/len(tf))*math.log10( (n+1)/ int(doc_freq[j]) )
+                weight = float(tf[k])/len(tf)
                 dot += pow(weight, 2)                               #Calculation of tf^2 for getting Normalization
                 vector.append(weight)
             j += 1
@@ -59,6 +66,11 @@ def generate( ref_words, doc_freq, tokens, tf, i,n,y1,folder):  #Genrates Vector
         if folder == 'KNN':
             vector.append(0)
         elif y1[j]>2:
+            if(num==1):
+                file.write(ref_words[j])
+                file.write(',')
+                file1.write(str(doc_freq[j]))
+                file1.write(',')
             vector.append(0)
         j += 1
     while(k < n2):
@@ -67,9 +79,10 @@ def generate( ref_words, doc_freq, tokens, tf, i,n,y1,folder):  #Genrates Vector
             k += 1
             continue
         k += 1
-    return dot,vector
+    num=10
+    return dot,vector,num
 
-#############Vector GEnerator  O(56)#####################################
+#############Vector GEnerator  O(N)#####################################
 def generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder,y1):
 
     n = len(doc_vocab)
@@ -78,24 +91,21 @@ def generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder,y1):
     doc_freq = all_tf
     weights = []
     vectors = {}
+    num=1
+    if folder=='Kmean':
+        file = open('./Kmean/shortVocab.txt','w')
+        file1 = open('./Kmean/shortDF.txt','w')
+    else:
+        file = ''
+        file1 = ''
     for i,value in doc_vocab.items():
         tokens = doc_vocab[i]
         tf = doc_tf[i]
-        dot,vector = generate(ref_words, doc_freq, tokens, tf, i ,n ,y1 ,folder)
+        dot,vector,num = generate(ref_words, doc_freq, tokens, tf, i ,n ,y1 ,folder,file,file1,num)
         vectors[str(i)] = vector
         weights.append(math.sqrt(dot))
-
-
-    # print("saving data")
-    # print(folder)
-    # if(folder=='Kmean'):
-    #     file = open('./Kmean/all_doc.json','w')
-    #     json.dump(doc_vocab,file)
-    #     file.close()
-    #     file = open('./Kmean/all_tf.json','w')
-    #     json.dump(doc_tf,file)
-    #     file.close()   
-    # print("Vector Saved")
+    if folder=='Kmean':
+        file.close()
     if folder=='KNN':  
         file = open('./{}/Corpus.txt'.format(folder),'w')
         file.write(",".join(map(str, all_vocab)))
@@ -113,17 +123,12 @@ def generate_vector(all_vocab,all_tf,doc_vocab,doc_tf,folder,y1):
     file  = open('./{}/vector.json'.format(folder),'w')
     json.dump(vectors,file)
     file.close()
-    
 ######################mergesort  O(n)###################################
-
-
 def merge( arr, l, m, r):
     n1 = m - l + 1
     n2 = r - m
-
     L = [0] * (n1)
     R = [0] * (n2)
-
 # Copy data to temp arrays L[] and R[]
     for i in range(0, n1):
         L[i] = arr[l + i]
@@ -133,7 +138,6 @@ def merge( arr, l, m, r):
     i = 0     # Initial index of first subarray
     j = 0     # Initial index of second subarray
     k = l     # Initial index of merged subarray
-
     while i < n1 and j < n2:
         if L[i] <= R[j]:
             arr[k] = L[i]
@@ -142,12 +146,10 @@ def merge( arr, l, m, r):
             arr[k] = R[j]
             j += 1
         k += 1
-
     while i < n1:
         arr[k] = L[i]
         i += 1
         k += 1
-
     while j < n2:
         arr[k] = R[j]
         j += 1
@@ -179,7 +181,6 @@ def mergelists( x1, x2,y1,y2, ind, doc_freq):
         if(x2[j] == ''):
             j += 1
             continue
-
         if x1[i] < x2[j]:
             word.append(x1[i])  # Send Word To Dictionary
             tf.append(y1[i])
@@ -190,9 +191,7 @@ def mergelists( x1, x2,y1,y2, ind, doc_freq):
             tf.append(y2[j])
             freq_list.append(1)  # New Word Append 1 as frequency
             j += 1
-        else:
-
-            # Documewnts are same so join <docNo> and both postion Lists
+        else:# Documewnts are same so join <docNo> and both postion Lists
             word.append(x1[i])
             tf.append(y1[i]+y2[j])
             freq_list.append(doc_freq[i]+1)  # Join Previous Frequency + 1
@@ -209,9 +208,7 @@ def mergelists( x1, x2,y1,y2, ind, doc_freq):
         tf.append(y1[i])
         freq_list.append(doc_freq[i])
         i += 1
-
-# Copy the remaining elements of list2, if there
-# are any
+# Copy the remaining elements of list2, if there are any
     while j < n2:
         if(x2[j] == ''):
             j += 1
@@ -224,29 +221,22 @@ def mergelists( x1, x2,y1,y2, ind, doc_freq):
 def tokenizer(files,stopwords,Class,doc_vocab,doc_tf):
     global Ltoken
 #Tokenize stem fold case of words
-   
     for i in files:
         num = i.split('/')
         num = num[len(num)-1].split('.')[0]
-        
         print("Toeknizing Doc {}".format(i))
         f = open(i,'rb')
         if f.mode == 'rb':
-            
             content = str(f.read())
-            
             w = ''
             for j in range(len(content)):
-
                 if((content[j] in [' ', '.', '\n',']','-','?']) and w != '' and w != "'" or (content[j-1]>='a' and content[j-1]<='z' and (content[j]>'z' or content[j]<'a'))):
                     # removing stopwords
                     if(w not in stopwords and w not in ['']):
                         tk = stemmer.stem(w)
                         #tk = lemmatizer.lemmatize(w)  # Lemmatization
                         Ltoken.append(tk)
-
                     w = ''
-
                 elif content[j] not in ['', ' ', '[', ',', ':', '?', '(',')','—','"',';',"'",'!','-','.','\n','']:
                     if(content[j] >= 'A' and content[j] <= 'Z'):  # Case folding
                         w = w+chr(ord(content[j])+32)
@@ -383,7 +373,7 @@ def parse_Query( query):
             if(w not in ['', ",", ' ']):
                 parsed.append(w)
             w = ''
-        elif query[i] not in [' ', "'", '"', '']:
+        elif query[i] not in ['', ' ', '[', ',', ':', '?', '(',')','—','"',';',"'",'!','-','.','\n','']:
             w += query[i]
     s.close()
     if w not in ['', ",", ' ']:
@@ -441,9 +431,9 @@ def process_Query( parsed,corpus):
     query_tf.append(count)
     result = []
     for i in range(len(new_parsed)):               #Find occurence of query terms in corpus
-        result.append(binarySearch(
-            tokens, 0, len(tokens)-1, parsed[i]))
-
+        ind = binarySearch(tokens, 0, len(tokens)-1, new_parsed[i])
+        result.append(ind)
+        #print("{},{}".format(result[len(result)-1],new_parsed))
     return result, query_tf, new_parsed
 
 
@@ -455,7 +445,43 @@ def uc_distance(query,corpus):
         except:
             ans+=value**2
     return ans
-    
+def PredictKmean( parsed, query_tf, results,all_centroid,documentFreq,corpus):
+    n = 737
+    #print(results)
+    query_vector = []
+    doc_freq = documentFreq
+    ########
+    n1 = len(corpus)
+    n2 = len(parsed)
+    j=0
+    k=0
+    while j<n1 and k<n2:
+        if(parsed[k]==''):
+            k+=1
+            continue
+        if corpus[j]!=parsed[k]:
+            query_vector.append(0)
+            j+=1
+        else:
+            query_vector.append( (math.log10(n/int(doc_freq[results[k]])))* (query_tf[k]) )
+            j+=1
+            k+=1
+    while j<n1:
+        if(corpus[j]!=''):
+            query_vector.append(0)
+        j+=1
+    while k<n2:
+        k+=1
+        print("Extra")
+
+    result = {}
+    for key,value in all_centroid.items():
+        result[key] = manhattan_distances(np.array(value).reshape(1,-1), np.array(query_vector).reshape(1,-1))
+    result  = sorted(result.items(), key=lambda x: x[1])
+    result = dict(result)
+    return list(result.keys())[0]
+
+
 
 def fetch_docs( parsed, query_tf, results,all_vectors,weights,documentFreq,corpus):
     n = len(all_vectors)
@@ -553,7 +579,7 @@ class KNN():
             path = './bbcsport-fulltext/bbcsport/{}/*.txt'.format(p)   
             files=glob.glob(path)
             if(len(files)>0):
-                ratio = int(len(files)*0.2)
+                ratio = int(len(files)*0.3)
                 train = files[ratio:]
                 test[p] = files[:ratio]
                 print("Length of Test and Train {},{}".format(len(train),len(test)))
@@ -570,10 +596,12 @@ class KNN():
         if self.corpus==None or self.documentFreq==None or self.weights==None or self.vectors==None:
             eel.say_hello_js("KNN Not Trained Yet!! Please Train First")
             return
-        file = open('./KNN/testDocs.txt','r')
-        test = json.load(file)
-        file.close()
-
+        try:
+            file = open('./KNN/testDocs.txt','r')
+            test = json.load(file)
+            file.close()
+        except:
+            eel.say_hello_js("KNN Not Trained Yet!! Please Train First")
         prediction = []
         test_label = []
 
@@ -608,7 +636,7 @@ class KNN():
     def predict_text(self,text):
         if self.corpus==None or self.documentFreq==None or self.weights==None or self.vectors==None:
             eel.say_hello_js("KNN Not Trained Yet!! Please Train First")
-            return
+            return 0 
         prediction = ""
         parsed = parse_Query(text)
         results,query_tf,parsed = process_Query(parsed,self.corpus)
@@ -637,7 +665,23 @@ class KNN():
 
 
 class Kmeans():
-
+    def __init__(self):
+        try:
+            file = open('./Kmean/shortVocab.txt','r')
+            self.vocab = file.read().split(',')
+            file.close()
+            file = open('./Kmean/shortDF.txt','r')
+            self.df = file.read().split(',')
+            file.close()
+            file = open('./Kmean/centroids.json','r')
+            self.centroids = json.load(file)
+            file.close()
+        except:
+            self.vocab = None
+            self.df = None
+            self.centroids = None  
+            eel.say_hello_js1("Vectors Not Generated Yet")
+            return
     number = 1
     def train_Kmean(self):
         test = {}
@@ -668,33 +712,49 @@ class Kmeans():
         return test
 
 
+    def predict_text(self,text):
+        print("Started Predicting")
+        if self.vocab == None or self.df==None or self.centroids == None:
+            try:
+                file = open('./Kmean/shortVocab.txt','r')
+                self.vocab = file.read().split(',')
+                file.close()
+                file = open('./Kmean/shortDF.txt','r')
+                self.df = file.read().split(',')
+                file.close()
+                file.open('./Kmean/centroids.json','r')
+                self.centroids = json.load(file)
+                file.close()
+            except:
+                print(self.centroids)
+                eel.say_hello_js1("Vectors Not Generated Yet")
+                return 0
+        prediction = ""
+        print("Parsing Document")
+        parsed = parse_Query(text)
+        print("Generating Vector")
+        results,query_tf,parsed = process_Query(parsed,self.vocab)        
+        for i in range(len(results)-1,-1,-1): #Remove words from query which are not in corpus
+            if(results[i]==-1):
+                parsed.pop(i)
+                results.pop(i)
+                query_tf.pop(i)
+        print("Predicting")
+        result = PredictKmean(parsed,query_tf,results,self.centroids,self.df,self.vocab)
+
+        return result
+
     def uclidean_distance(self,centroids,vector,key,cluster):
         result = {}
-        #ans1 = ans2 = ans3 = ans4 = ans5 = 0
-        # for j in range(len(centroids[0])):
-        #     ans1 += pow( (centroids[0][j] - vector[j]) , 2 )
-        #     ans2 += pow( (centroids[1][j] - vector[j]) , 2 )
-        #     ans3 += pow( (centroids[2][j] - vector[j]) , 2 )
-        #     ans4 += pow( (centroids[3][j] - vector[j]) , 2 )
-        #     ans5 += pow( (centroids[4][j] - vector[j]) , 2 )
-        # result['c1'] = math.sqrt(ans1)
-        # result['c2'] = math.sqrt(ans2)
-        # result['c3'] = math.sqrt(ans3)
-        # result['c4'] = math.sqrt(ans4)
-        # result['c5'] = math.sqrt(ans5)
-        ####lib1
         for i in range(len(centroids)):
-            result['c'+str(i)] = distance.euclidean(centroids[i], vector) 
-        # result['c1'] = distance.euclidean(centroids[0], vector)
-        # result['c2'] = distance.euclidean(centroids[1], vector)
-        # result['c3'] = distance.euclidean(centroids[2], vector)
-        # result['c4'] = distance.euclidean(centroids[3], vector)
-        # result['c5'] = distance.euclidean(centroids[4], vector)
-       
-        
+            try:
+                result['c'+str(i)] = manhattan_distances(np.array(centroids[i]).reshape(1,-1), np.array(vector).reshape(1,-1))
+                #result['c'+str(i)] = distance.euclidean(centroids[i], vector)
+            except:
+                print(centroids[i])
+                exit()       
         result  = sorted(result.items(), key=lambda x: x[1])
         result = dict(result)
-        #print(result)
         cluster[list(result.keys())[0]].append(key)
         
         
@@ -702,21 +762,16 @@ class Kmeans():
 
     def calculate_centroid(self,value1,vectors):
         try:
-            #ans = vectors[value1[0]]
             ans1 = np.array(vectors[value1[0]])
 
         except:
-            return
+            return 0
         
         n = len(value1)
         for i in range(1,n):
-            #new = vectors[value1[i]]
             new1 = np.array(vectors[value1[i]])
             ans1 = np.add(ans1,new1)
-            #for j in range(len(ans)):
-             #   ans[j]+=new[j]
         ans1 = np.divide(ans1,n)
-        #ans = [a/n for a in ans]
         return list(ans1)
 
     def run_K_mean(self,max_iter,no_cluster):
@@ -726,8 +781,7 @@ class Kmeans():
             vectors = json.load(file)
             file.close()
         except:
-            eel.say_hello_js1("Kmeans Vectors Not Found. Generate Vectors First")
-            return    
+            return 0  
         clist = []
         centroids = []
         for i in range(no_cluster):
@@ -743,19 +797,9 @@ class Kmeans():
         old_cluster = {}
         for i in range(no_cluster):
             old_cluster['c'+str(i)]=[]
-        # old_cluster['c1'] = []
-        # old_cluster['c2'] = []
-        # old_cluster['c3'] = []
-        # old_cluster['c4'] = []
-        # old_cluster['c5'] = []
         cluster = {}
         for i in range(no_cluster):
             cluster['c'+str(i)]=[]
-        # cluster['c1'] = []
-        # cluster['c2'] = []
-        # cluster['c3'] = []
-        # cluster['c4'] = []
-        # cluster['c5'] = []
         num = 1
         print(len(centroids))
         while True and num<max_iter:
@@ -765,24 +809,53 @@ class Kmeans():
                 self.uclidean_distance(centroids,value,key,cluster)
             
             if(old_cluster==cluster):
+                print("No Change In Cluster")
                 break
             else:
                 old_cluster = copy.deepcopy(cluster)
-                #old_centroids = copy.deepcopy(centroids)
+                old_centroids = copy.deepcopy(centroids)
+                itr = 0
                 centroids = []
                 for key1,value1 in cluster.items():
                     print("Elements in cluster {} = {}".format(key1,len(value1)))
-                    centre = self.calculate_centroid(value1,vectors)                   
-                    centroids.append(centre)
-                
+                    centre = self.calculate_centroid(value1,vectors)
+                    if centre == 0:
+                        centroids.append(old_centroids[itr])
+                    else:
+                        centroids.append(centre)
+                    itr+=1
+       
                 if(num<max_iter):
                     for key1,value1 in cluster.items():
                         value1.clear()
         
-        text1 = ""
+        text1 = "<div style = 'color:#BEFFDE'>Percentage = Total Of Class / Found In Any Cluster</div>"
+        center = {}
+        file = open('./Kmean/centroids.json','w')
+        for i in range(len(old_centroids)):
+            center['c'+str(i)] = old_centroids[i]
+        json.dump(center,file)
+        file.close()
         for key,value in cluster.items():
-            text1+="<div>{}</div>".format(key)
-            text1+="<div>{}</div>".format(value)
+            arr = np.zeros(5,dtype=int)
+            text1+="<div style='color:yellow'>{}</div>".format(key)
+            text1+="<div style='color:white'>{}</div>".format(value)
+            for val in value:
+                label = val.split('.')[0]
+                if label == 'athletics':
+                    arr[0]+=1
+                elif label == 'cricket':
+                    arr[1]+=1
+                elif label == 'football':
+                    arr[2]+=1
+                elif label == 'rugby':
+                    arr[3]+=1
+                else:
+                    arr[4]+=1
+            text1+="<div style='color:#BEFFDE'>Athletics = {}%, Cricket = {}%, Football = {}%, Rugby = {}%, Tennis = {}%</div>".format(round(arr[0]*100/101,3) ,round(arr[1]*100/124,3) , round(arr[2]*100/265,3) ,round(arr[3]*100/147,3) ,round(arr[4]*100/100,3) )
+        file = open('./Kmean/latestCluster.txt','w')
+        file.write(text1)
+        file.close()
         return text1
         answer = [0] * len(vectors)
         for key,value in cluster.items():
@@ -840,6 +913,8 @@ def say_hello_py(text,func):
         eel.say_hello_js("Working On Your Document")
         time.sleep(1)
         pred = knn.predict_text(text)
+        if pred ==0:
+            return
         eel.say_hello_js("Here We Go...")
         text = "<div style='font-size: larger;font-weight: bolder; color:yellow'>Your Document Belongs To {} Class</div>".format(pred)
         return text 
@@ -859,13 +934,23 @@ def say_hello_py(text,func):
         param = text.split(',')
         iteration = int(param[0],base=10)
         no_cluster = int(param[1],base=10)
+        print(iteration)
+        print(no_cluster)
         cluster = kmean.run_K_mean(iteration,no_cluster)
+        if cluster==0:
+            eel.say_hello_js1("Kmeans Vectors Not Found. Generate Vectors First")
+            return
         eel.say_hello_js1("Here We Go..")
         text = "<div style='color:yellow'>{}</div>".format(cluster)
         return text
     elif func == 'seeList':
-        file = open('./KNN/testDocs.txt','r')
-        data = json.load(file)
+        try:
+            file = open('./KNN/testDocs.txt','r')
+            data = json.load(file)
+            file.close()
+        except:
+            eel.say_hello_js("No Data Found. Please Run KNN")
+            return
         text = "<h3><span style='color:yellow'>Seperated Test Files</span></h3><br/>"
         for key,value in data.items():
             text+="<h5 style='color:#F9008C'>{}</h5 style='color:#00A1F9'><p style='color:yellow'>{}</p>".format(key,value)
@@ -880,5 +965,24 @@ def say_hello_py(text,func):
                 break
         except:
             eel.setFeatureSize("Vectors Not Generated Yet")
+    elif func=='seeCluster':
+        try:
+            file = open('./Kmean/latestCluster.txt','r')
+            text1 = file.read()
+            file.close()
+            return text1
+        except:
+            eel.say_hello_js1("No Clusters Generated Yet")
+    elif func=='predictKMean':
+        eel.say_hello_js1("Working On Your Document")
+        time.sleep(1)
+        pred = kmean.predict_text(text)
+        if pred ==0:
+            eel.say_hello_js1("Clusters Not Generated Yet")
+            return
+        eel.say_hello_js1("Here We Go...")
+        text = "<div style='font-size: larger;font-weight: bolder; color:yellow'>Your Document Belongs To {} Cluster</div>".format(pred)
+        return text 
+
    # Call a Javascript function
 eel.start('index.html', size=(1000, 1080))
